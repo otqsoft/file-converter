@@ -49,12 +49,12 @@
               {{ formatDate(row.created_at) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="140" fixed="right">
+          <el-table-column label="操作" width="160" fixed="right" align="right">
             <template #default="{ row }">
-              <el-button v-if="row.status === 'completed'" type="primary" size="small" link @click="download(row)">
+              <el-button v-if="row.status === 'completed'" type="primary" size="small" @click="download(row)">
                 <el-icon><Download /></el-icon> 下载
               </el-button>
-              <el-button type="danger" size="small" link @click="handleDelete(row)">
+              <el-button type="danger" size="small" @click="handleDelete(row)">
                 <el-icon><Delete /></el-icon> 删除
               </el-button>
             </template>

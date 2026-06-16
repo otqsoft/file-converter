@@ -141,7 +141,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 18px 6px;
+  padding: 10px 20px 10px 20px;
   border-radius: 8px 8px 0 0;
   color: rgba(255,255,255,0.65);
   font-size: 14px;
