@@ -13,7 +13,8 @@ task_manager = TaskManager()
 
 OFFICE_FORMATS = {"doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp"}
 MEDIA_FORMATS = {"avi", "mkv", "mov", "flv", "mp4", "gif", "webm", "mp3", "wav", "aac", "flac", "ogg"}
-OFFICE_OUTPUT = {"pdf"}
+PDF_FORMATS = {"pdf"}
+IMAGE_FORMATS = {"png", "jpg", "jpeg", "bmp", "gif", "tiff", "webp"}
 
 
 @router.post("/upload", response_model=ConversionTaskResponse)
@@ -28,16 +29,10 @@ async def upload_and_convert(
 
     ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
 
-    conversion_type = None
-    if ext in OFFICE_FORMATS and target_format in OFFICE_OUTPUT:
-        conversion_type = "office_to_pdf"
-    elif ext in MEDIA_FORMATS and target_format in MEDIA_FORMATS:
-        conversion_type = "media_convert"
-    else:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported conversion: {ext} -> {target_format}",
-        )
+    try:
+        conversion_type = task_manager.detect_conversion_type(ext, target_format)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     task_data = {
         "filename": file.filename,
@@ -111,6 +106,10 @@ async def download_result(task_id: int, db: AsyncSession = Depends(get_db)):
 
     content_type_map = {
         "pdf": "application/pdf",
+        "doc": "application/msword",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "xls": "application/vnd.ms-excel",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "mp4": "video/mp4",
         "avi": "video/x-msvideo",
         "mkv": "video/x-matroska",
@@ -118,11 +117,19 @@ async def download_result(task_id: int, db: AsyncSession = Depends(get_db)):
         "flv": "video/x-flv",
         "webm": "video/webm",
         "gif": "image/gif",
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "bmp": "image/bmp",
         "mp3": "audio/mpeg",
         "wav": "audio/wav",
         "aac": "audio/aac",
         "flac": "audio/flac",
         "ogg": "audio/ogg",
+        "md": "text/markdown",
+        "txt": "text/plain",
+        "csv": "text/csv",
+        "zip": "application/zip",
     }
     content_type = content_type_map.get(task.target_format, "application/octet-stream")
     filename = task.output_filename or f"output.{task.target_format}"

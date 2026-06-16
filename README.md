@@ -18,24 +18,39 @@
 	<p>&nbsp;</p>
 </div>
 
+一站式文件格式转换解决方案，支持文档、图片、音视频等多种格式的互转。
 
-支持 Office 文件转 PDF 和音视频格式互转的 Web 应用。
+## 核心特性
 
-## 技术栈
+### 文档转换
+- **PDF → Word/Excel**：提取 PDF 内容转换为可编辑的 Word 文档或 Excel 表格
+- **PDF → 图片**：将 PDF 页面导出为高清 PNG/JPG 图片
+- **PDF → Markdown**：将 PDF 转换为结构化的 Markdown 文档
+- **Office → PDF**：Word、Excel、PPT 转 PDF，保留原始排版
+- **Word/Excel 互转**：支持 Office 格式之间的转换及导出 TXT/CSV
 
-- **后端**: Python + FastAPI + FFmpeg + LibreOffice
-- **前端**: Vue 3 + TypeScript + Vite + Element Plus + Axios
-- **存储**: MinIO (S3 兼容)
-- **数据库**: SQLite (可切换 PostgreSQL)
+### 图片转换
+- **图片格式互转**：PNG、JPG、BMP、WebP 格式之间自由转换
+- **图片 → PDF**：将图片转换为 PDF 文档
 
-## 功能
+### 音视频转换
+- **视频格式互转**：MP4、AVI、MKV、MOV、FLV、WebM、GIF 等格式互转
+- **音频格式互转**：MP3、WAV、AAC、FLAC、OGG 格式互转
+- **音频提取**：从视频中提取音频轨道
 
-- Office 文件（Word、Excel、PowerPoint）转 PDF
-- 音视频格式互转（MP4、AVI、MKV、MOV、FLV、WebM、GIF 等）
-- 文件上传至 MinIO 存储
-- 转换结果下载
-- 历史转换记录查询
-- 进行中任务实时查看
+### 技术栈
+
+| 层级 | 技术 | 说明 |
+|------|------|------|
+| 前端 | Vue 3 + TypeScript | 类型安全的响应式 UI |
+| UI 框架 | Element Plus | 企业级组件库 |
+| 构建工具 | Vite | 极速开发体验 |
+| 后端 | Python + FastAPI | 高性能异步 API |
+| 文档转换 | LibreOffice | 开源办公套件，支持格式最全 |
+| PDF 处理 | PyMuPDF | 高性能 PDF 渲染与解析 |
+| 音视频 | FFmpeg | 业界标准多媒体处理 |
+| 存储 | MinIO | S3 兼容的对象存储 |
+| 数据库 | SQLite | 轻量级，可切换 PostgreSQL |
 
 ## 快速开始
 
@@ -45,37 +60,76 @@
 docker-compose up -d
 ```
 
-- 前端: http://localhost:3000
-- 后端 API: http://localhost:8000
-- MinIO 控制台: http://localhost:9001
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| 前端 | http://localhost:3000 | Web 界面 |
+| 后端 API | http://localhost:8000/docs | Swagger 文档 |
+| MinIO 控制台 | http://localhost:9001 | 文件管理 (minioadmin/minioadmin) |
 
 ### 本地开发
 
-#### 后端
-
 ```bash
+# 后端
 cd backend
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
-```
 
-#### 前端
-
-```bash
+# 前端
 cd frontend
 npm install
 npm run dev
 ```
 
-## API 文档
+## 项目结构
 
-启动后端后访问 http://localhost:8000/docs 查看 Swagger 文档。
+```
+file-converter/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              # FastAPI 入口
+│   │   ├── config.py            # 配置管理
+│   │   ├── database.py          # 数据库连接
+│   │   ├── routers/             # API 路由
+│   │   ├── models/              # 数据模型
+│   │   ├── schemas/             # Pydantic 模式
+│   │   └── services/
+│   │       ├── converter.py     # 格式转换核心
+│   │       ├── minio_service.py # MinIO 存储
+│   │       └── task_manager.py  # 任务调度
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── api/                 # API 封装
+│   │   ├── views/               # 页面组件
+│   │   ├── stores/              # Pinia 状态
+│   │   ├── router/              # 路由配置
+│   │   └── App.vue
+│   ├── Dockerfile
+│   └── nginx.conf
+└── docker-compose.yml
+```
+
+## API 接口
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| POST | `/api/conversions/upload` | 上传文件并转换 |
+| GET | `/api/conversions/` | 查询历史记录 |
+| GET | `/api/conversions/active` | 查询进行中的任务 |
+| GET | `/api/conversions/{id}` | 查询任务详情 |
+| GET | `/api/conversions/{id}/download` | 下载转换结果 |
+| DELETE | `/api/conversions/{id}` | 删除任务记录 |
 
 ## 支持的格式
 
-### Office → PDF
-- 输入: doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp
-- 输出: pdf
+| 类型 | 支持格式 |
+|------|----------|
+| 文档 | doc, docx, xls, xlsx, ppt, pptx, odt, ods, odp, pdf, txt, csv, md |
+| 图片 | png, jpg, jpeg, bmp, gif, tiff, webp |
+| 视频 | mp4, avi, mkv, mov, flv, webm, gif |
+| 音频 | mp3, wav, aac, flac, ogg |
 
-### 音视频转换
-- 输入/输出: avi, mkv, mov, flv, mp4, gif, webm, mp3, wav, aac, flac, ogg
+## License
+
+MIT
