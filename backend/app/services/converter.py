@@ -267,9 +267,10 @@ class ConverterService:
     @staticmethod
     def convert_word_to_word(input_path: str, output_dir: str, target_format: str) -> str:
         input_name = Path(input_path).stem
+        input_ext = Path(input_path).suffix.lstrip(".").lower()
         output_ext = target_format
 
-        if target_format == "txt":
+        if target_format == "txt" and input_ext in ("docx", "doc"):
             from docx import Document
             doc = Document(input_path)
             output_path = os.path.join(output_dir, f"{input_name}.txt")

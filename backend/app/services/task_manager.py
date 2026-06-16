@@ -24,6 +24,8 @@ class TaskManager:
     def detect_conversion_type(self, original_format: str, target_format: str) -> str:
         if original_format in OFFICE_FORMATS and target_format == "pdf":
             return "office_to_pdf"
+        if original_format in OFFICE_FORMATS and target_format == "txt":
+            return "word_convert"
         if original_format == "pdf" and target_format in ("docx", "doc"):
             return "pdf_to_word"
         if original_format == "pdf" and target_format in ("xlsx", "xls"):
@@ -38,7 +40,7 @@ class TaskManager:
             return "image_to_image"
         if original_format in IMAGE_FORMATS and target_format == "pdf":
             return "image_to_pdf"
-        if original_format in ("docx", "doc") and target_format in ("docx", "doc", "txt", "pdf"):
+        if original_format in ("docx", "doc") and target_format in ("docx", "doc", "pdf"):
             return "word_convert"
         if original_format in ("xlsx", "xls") and target_format in ("xlsx", "xls", "csv", "pdf"):
             return "excel_convert"
