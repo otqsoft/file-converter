@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
 from ..database import get_db
@@ -103,6 +102,7 @@ async def download_result(task_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Output file not found")
 
     file_data = task_manager.minio.download_file(task.minio_output_key)
+    file_bytes = file_data.read()
 
     content_type_map = {
         "pdf": "application/pdf",
@@ -134,11 +134,9 @@ async def download_result(task_id: int, db: AsyncSession = Depends(get_db)):
     content_type = content_type_map.get(task.target_format, "application/octet-stream")
     filename = task.output_filename or f"output.{task.target_format}"
 
-    def iter_file():
-        yield from file_data
-
-    return StreamingResponse(
-        iter_file(),
+    from fastapi.responses import Response
+    return Response(
+        content=file_bytes,
         media_type=content_type,
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )

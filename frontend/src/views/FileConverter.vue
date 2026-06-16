@@ -379,13 +379,24 @@ const stopPolling = () => {
   }
 }
 
-const downloadResult = () => {
-  if (currentTask.value) {
+const downloadResult = async () => {
+  if (!currentTask.value) return
+  try {
     const url = conversionApi.getDownloadUrl(currentTask.value.id)
+    const res = await fetch(url)
+    if (!res.ok) {
+      const err = await res.json().catch(() => null)
+      throw new Error(err?.detail || '下载服务异常')
+    }
+    const blob = await res.blob()
+    const blobUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url
+    a.href = blobUrl
     a.download = currentTask.value.output_filename || 'output'
     a.click()
+    URL.revokeObjectURL(blobUrl)
+  } catch (err: any) {
+    ElMessage.error('下载失败：' + (err.message || '下载服务异常'))
   }
 }
 </script>
@@ -399,7 +410,7 @@ const downloadResult = () => {
 
 .converter-grid {
   display: grid;
-  grid-template-columns: 1fr 380px;
+  grid-template-columns: 1fr 400px;
   gap: 24px;
   align-items: start;
 }

@@ -127,11 +127,24 @@ const formatSize = (bytes: number) => {
 
 const formatDate = (dateStr: string) => new Date(dateStr).toLocaleString('zh-CN')
 
-const download = (task: ConversionTask) => {
-  const a = document.createElement('a')
-  a.href = conversionApi.getDownloadUrl(task.id)
-  a.download = task.output_filename || 'output'
-  a.click()
+const download = async (task: ConversionTask) => {
+  try {
+    const url = conversionApi.getDownloadUrl(task.id)
+    const res = await fetch(url)
+    if (!res.ok) {
+      const err = await res.json().catch(() => null)
+      throw new Error(err?.detail || '下载服务异常')
+    }
+    const blob = await res.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = blobUrl
+    a.download = task.output_filename || 'output'
+    a.click()
+    URL.revokeObjectURL(blobUrl)
+  } catch (err: any) {
+    ElMessage.error('下载失败：' + (err.message || '下载服务异常'))
+  }
 }
 
 const handleDelete = async (task: ConversionTask) => {

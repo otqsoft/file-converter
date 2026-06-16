@@ -1,75 +1,44 @@
 <template>
   <div class="app-wrapper">
-    <aside class="app-sidebar">
-      <div class="sidebar-header">
+    <header class="app-header">
+      <div class="header-left">
         <div class="logo-box">
-          <el-icon :size="28" color="#fff"><SetUp /></el-icon>
+          <img src="/logo.png" alt="logo" />
         </div>
         <div class="logo-text">
           <h1>FileConvert</h1>
           <span>格式转换工具</span>
         </div>
       </div>
-      <el-menu
-        :default-active="activeMenu"
-        class="sidebar-menu"
-        router
-        background-color="transparent"
-        text-color="rgba(255,255,255,0.65)"
-        active-text-color="#fff"
-      >
-        <el-menu-item index="/">
+      <nav class="header-nav">
+        <router-link to="/" class="nav-item" :class="{ active: route.path === '/' }">
           <el-icon><Switch /></el-icon>
           <span>格式转换</span>
-        </el-menu-item>
-        <el-menu-item index="/active">
+        </router-link>
+        <router-link to="/active" class="nav-item" :class="{ active: route.path === '/active' }">
           <el-icon><Loading /></el-icon>
           <span>进行中任务</span>
-        </el-menu-item>
-        <el-menu-item index="/history">
+        </router-link>
+        <router-link to="/history" class="nav-item" :class="{ active: route.path === '/history' }">
           <el-icon><Clock /></el-icon>
           <span>历史记录</span>
-        </el-menu-item>
-      </el-menu>
-      <div class="sidebar-footer">
-        <div class="support-info">
-          <el-icon><InfoFilled /></el-icon>
-          <span>v1.0.0</span>
-        </div>
+        </router-link>
+      </nav>
+      <div class="header-right">
+        <span class="version-tag">v1.0.0</span>
       </div>
-    </aside>
+    </header>
     <main class="app-main">
-      <header class="main-header">
-        <div class="breadcrumb-area">
-          <span class="page-title">{{ pageTitle }}</span>
-        </div>
-        <div class="header-actions">
-          <el-tag effect="plain" round>MinIO 存储</el-tag>
-        </div>
-      </header>
-      <div class="main-content">
-        <router-view />
-      </div>
+      <router-view />
     </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { Switch, Loading, Clock, InfoFilled, SetUp } from '@element-plus/icons-vue'
+import { Switch, Loading, Clock, SetUp } from '@element-plus/icons-vue'
 
 const route = useRoute()
-const activeMenu = computed(() => route.path)
-
-const pageTitle = computed(() => {
-  const map: Record<string, string> = {
-    '/': '格式转换',
-    '/active': '进行中任务',
-    '/history': '历史记录',
-  }
-  return map[route.path] || '格式转换'
-})
 </script>
 
 <style>
@@ -80,7 +49,6 @@ const pageTitle = computed(() => {
   --primary-light: #818cf8;
   --primary-dark: #3730a3;
   --primary-bg: #eef2ff;
-  --sidebar-bg: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
   --surface: #ffffff;
   --surface-hover: #f8fafc;
   --border: #e2e8f0;
@@ -94,6 +62,7 @@ const pageTitle = computed(() => {
   --radius-sm: 8px;
   --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05);
+  --header-height: 60px;
 }
 
 * {
@@ -110,118 +79,112 @@ body {
 }
 
 .app-wrapper {
-  display: flex;
   min-height: 100vh;
-}
-
-.app-sidebar {
-  width: 240px;
-  background: var(--sidebar-bg);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  z-index: 100;
-}
-
-.sidebar-header {
-  padding: 24px 20px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-box {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo-text h1 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.5px;
-}
-
-.logo-text span {
-  font-size: 11px;
-  color: rgba(255,255,255,0.5);
-}
-
-.sidebar-menu {
-  flex: 1;
-  border-right: none !important;
-  padding: 8px 12px;
-}
-
-.sidebar-menu .el-menu-item {
-  height: 44px;
-  line-height: 44px;
-  border-radius: var(--radius-sm);
-  margin-bottom: 4px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.sidebar-menu .el-menu-item:hover {
-  background: rgba(255,255,255,0.1) !important;
-}
-
-.sidebar-menu .el-menu-item.is-active {
-  background: rgba(255,255,255,0.15) !important;
-  color: #fff !important;
-}
-
-.sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(255,255,255,0.08);
-}
-
-.support-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: rgba(255,255,255,0.4);
-  font-size: 12px;
-}
-
-.app-main {
-  flex: 1;
-  margin-left: 240px;
   display: flex;
   flex-direction: column;
 }
 
-.main-header {
-  height: 64px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+.app-header {
+  height: var(--header-height);
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #3730a3 100%);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
   position: sticky;
   top: 0;
-  z-index: 50;
+  z-index: 100;
+  box-shadow: 0 2px 12px rgba(30, 27, 75, 0.3);
 }
 
-.page-title {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text-primary);
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.main-content {
+.logo-box {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+.logo-text h1 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+
+.logo-text span {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  display: block;
+  margin-top: -1px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 100%;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px 6px;
+  border-radius: 8px 8px 0 0;
+  color: rgba(255,255,255,0.65);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.nav-item:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+}
+
+.nav-item.active {
+  color: #fff;
+  background: rgba(255,255,255,0.18);
+  border-bottom-color: #a5b4fc;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-right .el-tag {
+  border-color: rgba(255,255,255,0.2) !important;
+  color: rgba(255,255,255,0.8) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+
+.version-tag {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+}
+
+.app-main {
   flex: 1;
   padding: 28px 32px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .el-card {
