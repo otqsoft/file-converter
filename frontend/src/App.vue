@@ -7,7 +7,7 @@
         </div>
         <div class="logo-text">
           <h1>FileConvert</h1>
-          <span>格式转换工具</span>
+          <span>文件格式转换工具</span>
         </div>
       </div>
       <nav class="header-nav">
@@ -31,6 +31,9 @@
     <main class="app-main">
       <router-view />
     </main>
+    <footer class="app-footer">
+      <span>文件格式转换工具 · 出品：Q-Quick</span>
+    </footer>
   </div>
 </template>
 
@@ -185,6 +188,13 @@ body {
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
+}
+
+.app-footer {
+  text-align: center;
+  padding: 32px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .el-card {
