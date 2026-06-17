@@ -7,16 +7,6 @@ const routes: RouteRecordRaw[] = [
     name: 'Home',
     component: () => import('@/views/FileConverter.vue'),
   },
-  {
-    path: '/history',
-    name: 'History',
-    component: () => import('@/views/History.vue'),
-  },
-  {
-    path: '/active',
-    name: 'ActiveTasks',
-    component: () => import('@/views/ActiveTasks.vue'),
-  },
 ]
 
 const router = createRouter({

@@ -20,12 +20,13 @@ services:
       MINIO_PUBLIC_ENDPOINT: localhost:9000
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
-      DATABASE_URL: sqlite+aiosqlite:///./converter.db
+      DATABASE_URL: sqlite+aiosqlite:///./data/converter.db
     depends_on:
       - minio
     volumes:
       - upload_data:/app/uploads
       - output_data:/app/outputs
+      - db_data:/app/data
 
   frontend:
     build: ./frontend
@@ -38,3 +39,4 @@ volumes:
   minio_data:
   upload_data:
   output_data:
+  db_data:

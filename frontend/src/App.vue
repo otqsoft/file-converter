@@ -10,20 +10,6 @@
           <span>文件格式转换工具</span>
         </div>
       </div>
-      <nav class="header-nav">
-        <router-link to="/" class="nav-item" :class="{ active: route.path === '/' }">
-          <el-icon><Switch /></el-icon>
-          <span>格式转换</span>
-        </router-link>
-        <router-link to="/active" class="nav-item" :class="{ active: route.path === '/active' }">
-          <el-icon><Loading /></el-icon>
-          <span>进行中任务</span>
-        </router-link>
-        <router-link to="/history" class="nav-item" :class="{ active: route.path === '/history' }">
-          <el-icon><Clock /></el-icon>
-          <span>历史记录</span>
-        </router-link>
-      </nav>
       <div class="header-right">
         <span class="version-tag">v1.0.0</span>
       </div>
@@ -38,10 +24,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import { Switch, Loading, Clock, SetUp } from '@element-plus/icons-vue'
-
-const route = useRoute()
 </script>
 
 <style>
@@ -133,48 +115,10 @@ body {
   margin-top: -1px;
 }
 
-.header-nav {
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  height: 100%;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px 10px 20px;
-  border-radius: 8px 8px 0 0;
-  color: rgba(255,255,255,0.65);
-  font-size: 14px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.nav-item:hover {
-  color: #fff;
-  background: rgba(255,255,255,0.1);
-}
-
-.nav-item.active {
-  color: #fff;
-  background: rgba(255,255,255,0.18);
-  border-bottom-color: #a5b4fc;
-}
-
 .header-right {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.header-right .el-tag {
-  border-color: rgba(255,255,255,0.2) !important;
-  color: rgba(255,255,255,0.8) !important;
-  background: rgba(255,255,255,0.08) !important;
 }
 
 .version-tag {

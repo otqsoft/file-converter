@@ -62,8 +62,8 @@
               v-for="fmt in group.formats"
               :key="fmt.value"
               class="format-chip"
-              :class="{ active: targetFormat === fmt.value }"
-              @click="targetFormat = fmt.value"
+              :class="{ active: targetFormat === fmt.value, disabled: fmt.value === originalFormat }"
+              @click="fmt.value !== originalFormat && (targetFormat = fmt.value)"
             >
               <span class="chip-label">{{ fmt.label }}</span>
               <span class="chip-ext">.{{ fmt.value }}</span>
@@ -142,6 +142,70 @@
       </div>
     </div>
 
+    <!-- 历史转换记录 -->
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon history-icon">
+          <el-icon :size="24"><Clock /></el-icon>
+        </div>
+        <div>
+          <h3>历史转换记录</h3>
+          <p>查看所有已完成和失败的转换任务</p>
+        </div>
+        <div style="flex:1"></div>
+        <el-button @click="loadHistory" :loading="historyLoading" round>
+          <el-icon><Refresh /></el-icon>
+          刷新
+        </el-button>
+      </div>
+
+      <div class="table-wrap">
+        <el-table :data="historyTasks" v-loading="historyLoading" stripe>
+          <el-table-column prop="id" label="ID" width="70" />
+          <el-table-column prop="filename" label="文件名" min-width="200" show-overflow-tooltip />
+          <el-table-column label="类型" width="140">
+            <template #default="{ row }">
+              <el-tag size="small" effect="plain" :type="getTypeTag(row.conversion_type)">
+                {{ getConversionLabel(row.conversion_type) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="格式" width="130">
+            <template #default="{ row }">
+              <span class="format-text">{{ row.original_format.toUpperCase() }} → {{ row.target_format.toUpperCase() }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="getStatusType(row.status)" size="small">
+                {{ getStatusText(row.status) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="大小" width="100">
+            <template #default="{ row }">
+              {{ formatFileSize(row.file_size) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="时间" width="180">
+            <template #default="{ row }">
+              {{ formatDate(row.created_at) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="160" fixed="right" align="right">
+            <template #default="{ row }">
+              <el-button v-if="row.status === 'completed'" type="primary" size="small" @click="downloadHistoryTask(row)">
+                <el-icon><Download /></el-icon> 下载
+              </el-button>
+              <el-button type="danger" size="small" @click="handleDelete(row)">
+                <el-icon><Delete /></el-icon> 删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
+
     <!-- 支持的转换类型 -->
     <div class="quick-convert-section">
       <div class="section-card">
@@ -156,11 +220,8 @@
         </div>
         <div class="convert-types-grid">
           <div class="type-card" v-for="item in convertTypes" :key="item.title">
-            <div class="type-icon" :style="{ background: item.bg }">
-              <el-icon :size="20" :color="item.color"><component :is="item.icon" /></el-icon>
-            </div>
-            <h4>{{ item.title }}</h4>
-            <p>{{ item.desc }}</p>
+            <el-icon :size="22" color="var(--primary)"><component :is="item.icon" /></el-icon>
+            <span>{{ item.title }}</span>
           </div>
         </div>
       </div>
@@ -169,11 +230,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   UploadFilled, Close, Aim, Refresh, Download, InfoFilled,
-  Document, Picture, VideoCamera, Headset, List
+  Document, Picture, VideoCamera, List, Clock, Delete
 } from '@element-plus/icons-vue'
 import { useConverterStore } from '@/stores/converter'
 import { conversionApi } from '@/api'
@@ -186,6 +247,23 @@ const targetFormat = ref('')
 const converting = ref(false)
 const taskList = ref<ConversionTask[]>([])
 const pollTimers: Map<number, ReturnType<typeof setInterval>> = new Map()
+
+const historyTasks = ref<ConversionTask[]>([])
+const historyLoading = ref(false)
+
+onMounted(() => {
+  loadHistory()
+})
+
+const loadHistory = async () => {
+  historyLoading.value = true
+  try {
+    await store.fetchTasks({ page: 1, page_size: 100 })
+    historyTasks.value = store.tasks
+  } finally {
+    historyLoading.value = false
+  }
+}
 
 const OFFICE_FORMATS = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp']
 const PDF_FORMATS = ['pdf']
@@ -278,14 +356,10 @@ const availableFormats = computed(() => {
 })
 
 const convertTypes = [
-  { title: 'PDF → Word', desc: '将 PDF 转换为可编辑的 Word 文档', icon: Document, bg: '#eef2ff', color: '#4f46e5' },
-  { title: 'PDF → Excel', desc: '提取 PDF 表格数据为 Excel 文件', icon: Document, bg: '#ecfdf5', color: '#10b981' },
-  { title: 'PDF → 图片', desc: '将 PDF 页面导出为高清 PNG/JPG', icon: Picture, bg: '#fef3c7', color: '#f59e0b' },
-  { title: 'PDF ↔ Markdown', desc: 'PDF 与 Markdown 格式双向转换', icon: Document, bg: '#fce7f3', color: '#ec4899' },
-  { title: 'Office → PDF', desc: 'Word、Excel、PPT 转 PDF 格式', icon: Document, bg: '#eef2ff', color: '#4f46e5' },
-  { title: '图片互转', desc: 'PNG、JPG、BMP、WebP 格式互转', icon: Picture, bg: '#ecfdf5', color: '#10b981' },
-  { title: '音视频转换', desc: 'MP4、AVI、MKV、MOV 等格式互转', icon: VideoCamera, bg: '#fef3c7', color: '#f59e0b' },
-  { title: '音频提取', desc: '从视频中提取 MP3、WAV 等音频', icon: Headset, bg: '#fce7f3', color: '#ec4899' },
+  { title: '文档转换', icon: Document },
+  { title: 'PDF 转换', icon: Document },
+  { title: '图片转换', icon: Picture },
+  { title: '音视频转换', icon: VideoCamera },
 ]
 
 const getFileColor = (ext: string) => {
@@ -351,6 +425,7 @@ const startPolling = (taskId: number) => {
         } else {
           ElMessage.error(`转换失败：${task.error_message}`)
         }
+        loadHistory()
       }
     }
   }, 2000)
@@ -381,6 +456,47 @@ const downloadTask = async (task: ConversionTask) => {
     ElMessage.error('下载失败：' + (err.message || '下载服务异常'))
   }
 }
+
+const downloadHistoryTask = async (task: ConversionTask) => {
+  await downloadTask(task)
+}
+
+const handleDelete = async (task: ConversionTask) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条记录吗？', '确认删除', { type: 'warning' })
+    await store.deleteTask(task.id)
+    historyTasks.value = historyTasks.value.filter(t => t.id !== task.id)
+    ElMessage.success('删除成功')
+  } catch {}
+}
+
+const getConversionLabel = (type: string) => {
+  const map: Record<string, string> = {
+    office_to_pdf: 'Office→PDF', pdf_to_word: 'PDF→Word', pdf_to_excel: 'PDF→Excel',
+    pdf_to_image: 'PDF→图片', pdf_to_markdown: 'PDF→MD', image_to_image: '图片转换',
+    image_to_pdf: '图片→PDF', word_convert: 'Word转换', excel_convert: 'Excel转换',
+    media_convert: '音视频转换',
+  }
+  return map[type] || type
+}
+
+const getTypeTag = (type: string) => {
+  if (type.includes('pdf') || type.includes('word') || type.includes('excel') || type.includes('office')) return 'primary'
+  if (type.includes('image') || type.includes('media')) return 'success'
+  return 'info'
+}
+
+const getStatusType = (status: string) => {
+  const map: Record<string, string> = { pending: 'warning', processing: '', completed: 'success', failed: 'danger' }
+  return map[status] || 'info'
+}
+
+const getStatusText = (status: string) => {
+  const map: Record<string, string> = { pending: '等待中', processing: '转换中', completed: '已完成', failed: '失败' }
+  return map[status] || status
+}
+
+const formatDate = (dateStr: string) => new Date(dateStr).toLocaleString('zh-CN')
 </script>
 
 <style scoped>
@@ -418,6 +534,7 @@ const downloadTask = async (task: ConversionTask) => {
 .upload-icon { background: var(--primary-bg); color: var(--primary); }
 .target-icon { background: #fef3c7; color: #f59e0b; }
 .result-icon { background: #ecfdf5; color: #10b981; }
+.history-icon { background: #fef3c7; color: #f59e0b; }
 .info-icon { background: #f0f9ff; color: #0ea5e9; }
 
 .section-header h3 {
@@ -575,6 +692,17 @@ const downloadTask = async (task: ConversionTask) => {
   color: #fff;
 }
 
+.format-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--surface-hover);
+}
+
+.format-chip.disabled:hover {
+  border-color: var(--border);
+  background: var(--surface-hover);
+}
+
 .chip-label {
   font-weight: 500;
 }
@@ -594,6 +722,17 @@ const downloadTask = async (task: ConversionTask) => {
   font-size: 15px;
   font-weight: 600;
   border-radius: var(--radius-sm) !important;
+}
+
+/* History table */
+.table-wrap {
+  padding: 0 20px;
+}
+
+.format-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 /* Task list */
@@ -674,50 +813,33 @@ const downloadTask = async (task: ConversionTask) => {
 }
 
 .convert-types-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   padding: 20px 24px;
 }
 
 .type-card {
-  padding: 18px;
-  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 20px;
   border: 1px solid var(--border);
   transition: all 0.2s;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .type-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-
-.type-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 10px;
-}
-
-.type-card h4 {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.type-card p {
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.5;
+  border-color: var(--primary-light);
+  color: var(--primary);
 }
 
 @media (max-width: 1200px) {
   .convert-types-grid {
-    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
   }
 }
 </style>
