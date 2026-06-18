@@ -1,7 +1,9 @@
 import axios from 'axios'
 
+const rootURL = import.meta.env.VITE_API_ROOT_URL || ''
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${rootURL}/api`,
   timeout: 60000,
 })
 
@@ -52,7 +54,7 @@ export const conversionApi = {
   },
 
   getDownloadUrl(taskId: number) {
-    return `/api/conversions/${taskId}/download`
+    return `${rootURL}/api/conversions/${taskId}/download`
   },
 }
 

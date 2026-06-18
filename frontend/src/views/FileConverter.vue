@@ -162,7 +162,7 @@
       <div class="table-wrap">
         <el-table :data="historyTasks" v-loading="historyLoading" stripe>
           <el-table-column prop="id" label="ID" width="70" />
-          <el-table-column prop="filename" label="文件名" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="output_filename" label="文件名" min-width="200" show-overflow-tooltip />
           <el-table-column label="类型" width="140">
             <template #default="{ row }">
               <el-tag size="small" effect="plain" :type="getTypeTag(row.conversion_type)">
