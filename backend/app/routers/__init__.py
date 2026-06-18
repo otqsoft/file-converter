@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, desc
+from urllib.parse import quote
 from ..database import get_db
 from ..models.conversion import ConversionTask, ConversionStatus
 from ..schemas.conversion import ConversionTaskResponse, ConversionTaskListResponse
@@ -134,11 +135,15 @@ async def download_result(task_id: int, db: AsyncSession = Depends(get_db)):
     content_type = content_type_map.get(task.target_format, "application/octet-stream")
     filename = task.output_filename or f"output.{task.target_format}"
 
+    # RFC 5987 编码：处理非 ASCII 文件名（如中文），避免 HTTP 头部编码错误
+    quoted_filename = quote(filename)
+    content_disposition = f"attachment; filename=\"{quoted_filename}\"; filename*=UTF-8''{quoted_filename}"
+
     from fastapi.responses import Response
     return Response(
         content=file_bytes,
         media_type=content_type,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": content_disposition},
     )
 
 
