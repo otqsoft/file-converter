@@ -53,6 +53,7 @@ async def upload_and_convert(
 @router.get("/", response_model=ConversionTaskListResponse)
 async def list_tasks(
     status: str | None = None,
+    filename: str | None = None,
     page: int = 1,
     page_size: int = 20,
     db: AsyncSession = Depends(get_db),
@@ -67,6 +68,10 @@ async def list_tasks(
             count_query = count_query.where(ConversionTask.status == status_enum)
         except ValueError:
             raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
+
+    if filename:
+        query = query.where(ConversionTask.filename.ilike(f"%{filename}%"))
+        count_query = count_query.where(ConversionTask.filename.ilike(f"%{filename}%"))
 
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0

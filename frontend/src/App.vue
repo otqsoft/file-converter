@@ -11,7 +11,7 @@
         </div>
       </div>
       <div class="header-right">
-        <span class="version-tag">v1.0.0</span>
+        <span class="version-tag">v1.0.1</span>
       </div>
     </header>
     <main class="app-main">

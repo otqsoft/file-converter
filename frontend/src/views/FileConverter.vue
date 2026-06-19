@@ -150,18 +150,49 @@
         </div>
         <div>
           <h3>历史转换记录</h3>
-          <p>查看所有已完成和失败的转换任务</p>
         </div>
         <div style="flex:1"></div>
-        <el-button @click="loadHistory" :loading="historyLoading" round>
-          <el-icon><Refresh /></el-icon>
-          刷新
-        </el-button>
+        <div class="history-filters">
+          <el-input
+            v-model="historyFilename"
+            placeholder="搜索文件名"
+            clearable
+            size="small"
+            style="width: 180px"
+            @clear="loadHistory"
+            @keyup.enter="loadHistory"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+          <el-select
+            v-model="historyStatus"
+            placeholder="状态"
+            clearable
+            size="small"
+            style="width: 120px"
+            @change="loadHistory"
+          >
+            <el-option label="已完成" value="completed" />
+            <el-option label="失败" value="failed" />
+            <el-option label="转换中" value="processing" />
+            <el-option label="等待中" value="pending" />
+          </el-select>
+          <el-button size="small" @click="loadHistory" :loading="historyLoading">
+            <el-icon><Refresh /></el-icon>
+          </el-button>
+        </div>
       </div>
 
       <div class="table-wrap">
         <el-table :data="historyTasks" v-loading="historyLoading" stripe>
-          <el-table-column prop="id" label="ID" width="70" />
+          <!-- <el-table-column prop="id" label="ID" width="70" /> -->
+          <el-table-column label="时间" width="180">
+            <template #default="{ row }">
+              {{ formatDate(row.created_at) }}
+            </template>
+          </el-table-column>
           <el-table-column prop="filename" label="文件名" min-width="200" show-overflow-tooltip >
             <template #default="{ row }">
               {{ row.output_filename || row.filename }}
@@ -191,11 +222,6 @@
               {{ formatFileSize(row.file_size) }}
             </template>
           </el-table-column>
-          <el-table-column label="时间" width="180">
-            <template #default="{ row }">
-              {{ formatDate(row.created_at) }}
-            </template>
-          </el-table-column>
           <el-table-column label="操作" width="160" fixed="right" align="right">
             <template #default="{ row }">
               <el-button v-if="row.status === 'completed'" type="primary" size="small" @click="downloadHistoryTask(row)">
@@ -207,6 +233,16 @@
             </template>
           </el-table-column>
         </el-table>
+      </div>
+
+      <div class="pagination-wrap" v-if="historyTotal > historyPageSize">
+        <el-pagination
+          v-model:current-page="historyPage"
+          :page-size="historyPageSize"
+          :total="historyTotal"
+          layout="total, prev, pager, next"
+          @current-change="loadHistory"
+        />
       </div>
     </div>
 
@@ -238,7 +274,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   UploadFilled, Close, Aim, Refresh, Download, InfoFilled,
-  Document, Picture, VideoCamera, List, Clock, Delete
+  Document, Picture, VideoCamera, List, Clock, Delete, Search
 } from '@element-plus/icons-vue'
 import { useConverterStore } from '@/stores/converter'
 import { conversionApi } from '@/api'
@@ -254,6 +290,11 @@ const pollTimers: Map<number, ReturnType<typeof setInterval>> = new Map()
 
 const historyTasks = ref<ConversionTask[]>([])
 const historyLoading = ref(false)
+const historyPage = ref(1)
+const historyPageSize = 20
+const historyTotal = ref(0)
+const historyStatus = ref('')
+const historyFilename = ref('')
 
 onMounted(() => {
   loadHistory()
@@ -262,8 +303,12 @@ onMounted(() => {
 const loadHistory = async () => {
   historyLoading.value = true
   try {
-    await store.fetchTasks({ page: 1, page_size: 100 })
+    const params: any = { page: historyPage.value, page_size: historyPageSize }
+    if (historyStatus.value) params.status = historyStatus.value
+    if (historyFilename.value) params.filename = historyFilename.value
+    await store.fetchTasks(params)
     historyTasks.value = store.tasks
+    historyTotal.value = store.total
   } finally {
     historyLoading.value = false
   }
@@ -301,9 +346,6 @@ const availableFormats = computed(() => {
       label: 'PDF 转出',
       formats: [
         { label: 'Word', value: 'docx' },
-        { label: 'Excel', value: 'xlsx' },
-        { label: 'PNG 图片', value: 'png' },
-        { label: 'JPG 图片', value: 'jpg' },
         { label: 'Markdown', value: 'md' },
       ],
     })
@@ -397,6 +439,9 @@ const clearFile = () => {
   targetFormat.value = ''
   taskList.value = []
   stopAllPolling()
+  if (uploadRef.value) {
+    uploadRef.value.clearFiles()
+  }
 }
 
 const handleConvert = async () => {
@@ -469,7 +514,7 @@ const handleDelete = async (task: ConversionTask) => {
   try {
     await ElMessageBox.confirm('确定要删除这条记录吗？', '确认删除', { type: 'warning' })
     await store.deleteTask(task.id)
-    historyTasks.value = historyTasks.value.filter(t => t.id !== task.id)
+    loadHistory()
     ElMessage.success('删除成功')
   } catch {}
 }
@@ -729,8 +774,20 @@ const formatDate = (dateStr: string) => new Date(dateStr).toLocaleString('zh-CN'
 }
 
 /* History table */
+.history-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .table-wrap {
   padding: 0 20px;
+}
+
+.pagination-wrap {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .format-text {

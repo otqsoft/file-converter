@@ -41,7 +41,7 @@ export const conversionApi = {
     return api.get<ConversionTask>(`/conversions/${taskId}`)
   },
 
-  listTasks(params?: { status?: string; page?: number; page_size?: number }) {
+  listTasks(params?: { status?: string; filename?: string; page?: number; page_size?: number }) {
     return api.get<TaskListResponse>('/conversions/', { params })
   },
 

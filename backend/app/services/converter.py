@@ -329,9 +329,19 @@ class ConverterService:
                 "-vf", "fps=10,scale=480:-1:flags=lanczos",
                 "-loop", "0",
             ])
-        elif target_format in ("mp3", "wav", "aac", "flac", "ogg"):
+        elif target_format == "mp3":
             cmd.extend(["-vn", "-acodec", "libmp3lame", "-q:a", "2"])
-        elif target_format in ("mp4", "mkv", "avi", "mov", "flv", "webm"):
+        elif target_format == "wav":
+            cmd.extend(["-vn", "-acodec", "pcm_s16le"])
+        elif target_format == "aac":
+            cmd.extend(["-vn", "-acodec", "aac", "-strict", "experimental"])
+        elif target_format == "flac":
+            cmd.extend(["-vn", "-acodec", "flac"])
+        elif target_format == "ogg":
+            cmd.extend(["-vn", "-acodec", "libvorbis", "-q:a", "5"])
+        elif target_format == "webm":
+            cmd.extend(["-c:v", "libvpx-vp9", "-c:a", "libvorbis", "-b:v", "0", "-crf", "30"])
+        elif target_format in ("mp4", "mkv", "avi", "mov", "flv"):
             cmd.extend(["-c:v", "libx264", "-c:a", "aac", "-strict", "experimental"])
 
         cmd.append(output_path)
